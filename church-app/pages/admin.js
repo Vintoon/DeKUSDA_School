@@ -193,7 +193,7 @@ function PreviewModal({ pub, onClose, onApprove, onReject }) {
 }
 
 // ── Main Admin Page ───────────────────────────────────────────────────────────
-export default function AdminPage({ user, profile, refreshProfile }) {
+export default function AdminPage({ user, profile, authReady, refreshProfile }) {
   const router = useRouter()
   const [section, setSection]         = useState('publications')
   const [pubTab, setPubTab]           = useState('pending')
@@ -282,6 +282,18 @@ export default function AdminPage({ user, profile, refreshProfile }) {
     : userTab === 'admins'
       ? users.filter(u => u.role === 'admin' || u.role === 'superadmin')
       : users
+  // ADD THIS before the  if (!user || !isAdmin) line:
+  if (!authReady) return (
+    <>
+      <Navbar user={user} profile={profile} />
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin text-4xl mb-4">⏳</div>
+          <p className="font-ui text-slate-500">Loading…</p>
+        </div>
+      </div>
+    </>
+  )
 
   if (!user || !isAdmin) return (
     <>
