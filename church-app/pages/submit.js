@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import { HiUpload, HiX, HiDocumentText, HiPhotograph, HiVideoCamera } from 'react-icons/hi'
 import { v4 as uuidv4 } from 'uuid'
 
-export default function SubmitPage({ user, profile }) {
+export default function SubmitPage({ user, profile, authReady }) {
   const [form, setForm] = useState({
     title: '', category: 'sermon', summary: '', content: '',
     youtube_url: '', allow_download: true,
