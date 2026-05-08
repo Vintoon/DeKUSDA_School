@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 export default function App({ Component, pageProps }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [authReady, setAuthReady] = useState(false)
 
   // Register service worker for PWA
   useEffect(() => {
@@ -17,14 +18,17 @@ export default function App({ Component, pageProps }) {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-    })
+    // Use onAuthStateChange ONLY (not getSession + onAuthStateChange together).
+    // In Supabase v2 this fires an INITIAL_SESSION event on mount, giving us the
+    // current session without a separate getSession() call.
+    // Doing both caused a race condition on mobile: getSession() would call
+    // fetchProfile before the token was hydrated from storage, triggering 401s.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
       else setProfile(null)
+      // Mark auth as fully initialised after the first event fires.
+      setAuthReady(true)
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -51,6 +55,7 @@ export default function App({ Component, pageProps }) {
         {...pageProps}
         user={user}
         profile={profile}
+        authReady={authReady}
         refreshProfile={() => user && fetchProfile(user.id)}
       />
     </>
