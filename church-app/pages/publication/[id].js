@@ -213,11 +213,10 @@ export default function PublicationPage({ user, profile, pub, related: initialRe
             )}
 
             {pub.content && (
-              <div className="mb-8">
-                {pub.content.split('\n').filter(p => p.trim()).map((para, i) => (
-                  <p key={i} className="font-body text-lg text-slate-700 leading-loose mb-4">{para}</p>
-                ))}
-              </div>
+              <div
+                className="mb-8 prose-content"
+                dangerouslySetInnerHTML={{ __html: pub.content }}
+              />
             )}
 
             {ytId && (

@@ -182,14 +182,19 @@ export default function Home({ user, profile, initialPublications = [], initialS
             <div className="relative mb-5">
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                 {CATEGORIES.map(cat => (
-                  <button key={cat} onClick={() => handleCategory(cat)}
-                    className={`flex-shrink-0 px-4 py-2 rounded-full font-ui text-sm font-semibold transition-all min-h-[40px] ${
-                      category === cat
-                        ? 'bg-brand-600 text-white shadow-sm ring-2 ring-brand-200'
-                        : 'bg-white border border-slate-200 text-slate-600 hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50'
-                    }`}>
-                    {CAT_LABELS[cat]}
-                  </button>
+                  cat === 'about'
+                    ? <Link key="about" href="/about"
+                        className="flex-shrink-0 px-4 py-2 rounded-full font-ui text-sm font-semibold transition-all min-h-[40px] bg-white border border-slate-200 text-slate-600 hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50">
+                        About
+                      </Link>
+                    : <button key={cat} onClick={() => handleCategory(cat)}
+                        className={`flex-shrink-0 px-4 py-2 rounded-full font-ui text-sm font-semibold transition-all min-h-[40px] ${
+                          category === cat
+                            ? 'bg-brand-600 text-white shadow-sm ring-2 ring-brand-200'
+                            : 'bg-white border border-slate-200 text-slate-600 hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50'
+                        }`}>
+                        {CAT_LABELS[cat]}
+                      </button>
                 ))}
               </div>
             </div>
