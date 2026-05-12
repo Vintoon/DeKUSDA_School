@@ -28,11 +28,14 @@ export default function PublicationPage({ user, profile, pub, related: initialRe
     if (!pub) return
     fetchComments()
     checkLiked()
-    // Increment view count via raw SQL increment to avoid race conditions
-    supabase.rpc('increment_views', { pub_id: pub.id }).catch(() => {
-      // Fallback: best-effort update if RPC doesn't exist
-      supabase.from('publications').update({ views: (pub.views || 0) + 1 }).eq('id', pub.id).then(() => {})
-    })
+    // Increment view count — fire and forget, ignore errors
+    ;(async () => {
+      const { error } = await supabase.rpc('increment_views', { pub_id: pub.id })
+      if (error) {
+        // Fallback if RPC doesn't exist
+        await supabase.from('publications').update({ views: (pub.views || 0) + 1 }).eq('id', pub.id)
+      }
+    })()
   }, [pub?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // If server couldn't fetch the pub, show a friendly error

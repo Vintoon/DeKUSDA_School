@@ -459,7 +459,8 @@ export default function SubmitPage({ user, profile, authReady }) {
     if (!editId || !authReady) return
     if (!isAdmin) { toast.error('Admin access required to edit'); router.push('/'); return }
     setLoadingEdit(true)
-    supabase.from('publications').select('*').eq('id', editId).single().then(({ data, error }) => {
+    ;(async () => {
+      const { data, error } = await supabase.from('publications').select('*').eq('id', editId).single()
       if (error || !data) { toast.error('Publication not found'); router.push('/admin'); return }
       setForm({
         title: data.title || '',
@@ -474,7 +475,7 @@ export default function SubmitPage({ user, profile, authReady }) {
       if (data.cover_image_url) { setCoverPreview(data.cover_image_url); setExistingCoverUrl(data.cover_image_url) }
       if (data.pdf_url) setExistingPdf({ url: data.pdf_url, filename: data.pdf_filename })
       setLoadingEdit(false)
-    })
+    })()
   }, [editId, authReady]) // eslint-disable-line
 
   // ── Auto-save draft ────────────────────────────────────────────────────────
