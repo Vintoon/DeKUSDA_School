@@ -3,20 +3,13 @@ import { createClient } from '@supabase/supabase-js'
 const SUPABASE_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  || 'https://ddqdfilyncsgedphdzok.supabase.co'
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkcWRmaWx5bmNzZ2VkcGhkem9rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ1Njc4NTMsImV4cCI6MjA2MDE0Mzg1M30.vA3aSVTOuNJ3YlSEr9bDrpedQGKrRAT79VHoGnEj_Q8'
 
-// Safely get localStorage — it throws in SSR and some mobile WebViews
-function safeLocalStorage() {
-  try {
-    if (typeof window === 'undefined') return undefined
-    window.localStorage.getItem('__test__')
-    return window.localStorage
-  } catch {
-    return undefined
-  }
-}
-
+// Simple client — no custom storage option.
+// The safeLocalStorage() approach was causing sign-in to NOT persist because
+// it ran at SSR time (window=undefined → returned undefined → Supabase used
+// in-memory storage → session lost on refresh).
+// Supabase v2 already handles localStorage availability gracefully by default.
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
   auth: {
-    storage:           safeLocalStorage(),
     persistSession:    true,
     autoRefreshToken:  true,
     detectSessionInUrl: true,
@@ -24,9 +17,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
 })
 
 export function getYouTubeId(url) {
-  const patterns = [
-    /(?:v=|\/v\/|youtu\.be\/|\/embed\/)([a-zA-Z0-9_-]{11})/,
-  ]
+  const patterns = [/(?:v=|\/v\/|youtu\.be\/|\/embed\/)([a-zA-Z0-9_-]{11})/]
   for (const pattern of patterns) {
     const match = url?.match(pattern)
     if (match) return match[1]
