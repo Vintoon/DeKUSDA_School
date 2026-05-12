@@ -363,7 +363,7 @@ export default function PublicationPage({ user, profile, pub, related: initialRe
 
       <footer className="hero-pattern text-white mt-12 py-6 text-center">
         <p className="font-ui text-sm text-blue-300">
-          © {new Date().getFullYear()} Three Angels Publications Ministry &nbsp;·&nbsp;
+          © <span suppressHydrationWarning>{new Date().getFullYear()}</span> Three Angels Publications Ministry &nbsp;·&nbsp;
           <Link href="/" className="hover:text-white">Back to Publications</Link>
         </p>
       </footer>

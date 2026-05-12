@@ -38,7 +38,11 @@ export default function Home({ user, profile, initialPublications = [], initialS
   const [category, setCategory]         = useState('all')
   const [search, setSearch]             = useState('')
   const [stats, setStats]               = useState(initialStats)
-  const verse = SCRIPTURES[new Date().getDate() % SCRIPTURES.length]
+  // Use state for verse to avoid SSR/client hydration mismatch (Date differs server vs client)
+  const [verse, setVerse]               = useState(SCRIPTURES[0])
+  useEffect(() => {
+    setVerse(SCRIPTURES[new Date().getDate() % SCRIPTURES.length])
+  }, [])
 
   // Client-side refetch — only used when user changes category or retries
   const loadPublications = useCallback(async (cat) => {
@@ -378,7 +382,7 @@ export default function Home({ user, profile, initialPublications = [], initialS
           </div>
         </div>
         <div className="border-t border-white/10 text-center py-4 px-4 text-xs font-ui text-blue-400">
-          © {new Date().getFullYear()} Silent Witness: Truth in every page. All rights reserved.
+          © <span suppressHydrationWarning>{new Date().getFullYear()}</span> Silent Witness: Truth in every page. All rights reserved.
         </div>
       </footer>
     </div>

@@ -207,7 +207,7 @@ export default function AboutPage({ user, profile }) {
       <footer className="hero-pattern text-white mt-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 text-center">
           <p className="font-ui text-sm text-blue-300">
-            © {new Date().getFullYear()} DeKUSDA Silent Witness Ministry &nbsp;·&nbsp;
+            © <span suppressHydrationWarning>{new Date().getFullYear()}</span> DeKUSDA Silent Witness Ministry &nbsp;·&nbsp;
             <Link href="/" className="hover:text-white transition-colors">Publications</Link>
             &nbsp;·&nbsp;
             <Link href="/submit" className="hover:text-white transition-colors">Submit</Link>

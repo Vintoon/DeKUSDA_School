@@ -128,7 +128,7 @@ export default function ResourcesPage({ user, profile }) {
 
       <footer className="hero-pattern text-white mt-8 py-6 text-center">
         <p className="font-ui text-sm text-blue-300">
-          © {new Date().getFullYear()} Silent Witness: Truth in every page
+          © <span suppressHydrationWarning>{new Date().getFullYear()}</span> Silent Witness: Truth in every page
         </p>
       </footer>
     </>
