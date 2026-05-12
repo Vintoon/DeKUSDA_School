@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function App({ Component, pageProps }) {
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const [user, setUser]           = useState(null)
+  const [profile, setProfile]     = useState(null)
   const [authReady, setAuthReady] = useState(false)
 
   // Register service worker for PWA
@@ -18,28 +18,63 @@ export default function App({ Component, pageProps }) {
   }, [])
 
   useEffect(() => {
-    // Use onAuthStateChange ONLY (not getSession + onAuthStateChange together).
-    // In Supabase v2 this fires an INITIAL_SESSION event on mount, giving us the
-    // current session without a separate getSession() call.
-    // Doing both caused a race condition on mobile: getSession() would call
-    // fetchProfile before the token was hydrated from storage, triggering 401s.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else setProfile(null)
-      // Mark auth as fully initialised after the first event fires.
+    // ── Step 1: Read the stored session immediately from localStorage.
+    // onAuthStateChange alone can miss INITIAL_SESSION in Next.js pages router
+    // because the event fires during createClient() — before useEffect runs.
+    // getSession() explicitly reads the token so a refresh never loses the user.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user)
+        fetchProfile(session.user.id)
+      }
+      // Mark auth as ready after the initial read, whether logged in or not
       setAuthReady(true)
     })
+
+    // ── Step 2: Listen for auth changes (sign in, sign out, token refresh).
+    // We skip INITIAL_SESSION here because Step 1 already handled it,
+    // preventing a double fetchProfile call.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION') return // handled by getSession() above
+      setUser(session?.user ?? null)
+      if (session?.user) fetchProfile(session.user.id)
+      else { setProfile(null) }
+    })
+
     return () => subscription.unsubscribe()
   }, [])
 
   async function fetchProfile(id) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', id)
-      .single()
-    setProfile(data)
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single()
+      if (error) {
+        console.error('fetchProfile error:', error)
+        // If no profile exists yet, create one so the user isn't stuck
+        if (error.code === 'PGRST116') {
+          const { data: { user: authUser } } = await supabase.auth.getUser()
+          if (authUser) {
+            await supabase.from('profiles').upsert({
+              id: authUser.id,
+              email: authUser.email,
+              full_name: authUser.user_metadata?.full_name || authUser.email.split('@')[0],
+              role: 'member',
+            })
+            // Retry fetch after creating profile
+            const { data: newProfile } = await supabase
+              .from('profiles').select('*').eq('id', id).single()
+            setProfile(newProfile)
+          }
+        }
+        return
+      }
+      setProfile(data)
+    } catch (e) {
+      console.error('fetchProfile exception:', e)
+    }
   }
 
   return (
