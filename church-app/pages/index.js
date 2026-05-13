@@ -37,13 +37,12 @@ export default function Home({ user, profile }) {
   const [category, setCategory]         = useState('all')
   const [search, setSearch]             = useState('')
   const [stats, setStats]               = useState({ total:0, sermons:0, contributors:0 })
-  // Use state for verse to avoid SSR/client hydration mismatch (Date differs server vs client)
   const [verse, setVerse]               = useState(SCRIPTURES[0])
+
   useEffect(() => {
     setVerse(SCRIPTURES[new Date().getDate() % SCRIPTURES.length])
   }, [])
 
-  // Client-side refetch — only used when user changes category or retries
   const loadPublications = useCallback(async (cat) => {
     setLoading(true)
     setFetchError(false)
@@ -57,7 +56,15 @@ export default function Home({ user, profile }) {
       if (cat && cat !== 'all') q = q.eq('category', cat)
       const { data, error } = await q
       if (error) { console.error('Supabase error:', error); setFetchError(true); setPublications([]) }
-      else        { setPublications(data || []) }
+      else {
+        setPublications(data || [])
+        const all = data || []
+        setStats({
+          total: all.length,
+          sermons: all.filter(p => p.category === 'sermon').length,
+          contributors: new Set(all.map(p => p.author_name).filter(Boolean)).size,
+        })
+      }
     } catch(e) {
       console.error('Fetch failed:', e); setFetchError(true); setPublications([])
     } finally {
@@ -65,7 +72,6 @@ export default function Home({ user, profile }) {
     }
   }, [])
 
-  // Load publications on mount
   useEffect(() => {
     loadPublications('all')
   }, [loadPublications])
@@ -302,34 +308,6 @@ export default function Home({ user, profile }) {
                 <Link href="/submit" className="block px-4 py-3 bg-white text-brand-700 rounded-xl font-ui font-bold text-sm hover:bg-blue-50 transition-colors shadow-sm min-h-[44px]">
                   Submit Now
                 </Link>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-              <h3 className="font-ui font-bold text-xs text-slate-500 mb-3 uppercase tracking-wide">Reading Settings</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block font-ui text-xs text-slate-400 mb-1">Font Style</label>
-                  <select onChange={e=>document.documentElement.style.setProperty('--font-body',e.target.value)}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 font-ui text-xs outline-none bg-white">
-                    <option value="'Crimson Pro',serif">Crimson Pro</option>
-                    <option value="'Georgia',serif">Georgia</option>
-                    <option value="'DM Sans',sans-serif">DM Sans</option>
-                    <option value="'Cinzel',serif">Cinzel</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-ui text-xs text-slate-400 mb-1">Text Size</label>
-                  <div className="flex gap-1.5">
-                    {['A−','A','A+','A++'].map((s,i)=>(
-                      <button key={s}
-                        onClick={()=>{ const sz=['15px','17px','19px','22px']; document.documentElement.style.fontSize=sz[i] }}
-                        className="flex-1 py-2 border border-slate-200 rounded-lg font-ui text-xs font-medium hover:border-brand-400 hover:text-brand-600 transition-colors min-h-[36px]">
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </aside>
