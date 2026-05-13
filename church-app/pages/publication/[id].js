@@ -15,8 +15,8 @@ const CAT_COLORS = {
   general:'bg-slate-100 text-slate-700',
 }
 
-export default function PublicationPage({ user, profile, pub, related: initialRelated, error: serverError }) {
-  const [comments, setComments]           = useState([])
+export default function PublicationPage({ user, profile, pub, related: initialRelated, initialComments, error: serverError }) {
+  const [comments, setComments]           = useState(initialComments || [])
   const [liked, setLiked]                 = useState(false)
   const [likeCount, setLikeCount]         = useState(pub?.like_count || 0)
   const [newComment, setNewComment]       = useState({ name:'', email:'', body:'' })
@@ -83,15 +83,28 @@ export default function PublicationPage({ user, profile, pub, related: initialRe
 
   async function handleLike() {
     if (liked) {
-      if (user) await supabase.from('likes').delete().eq('publication_id', pub.id).eq('user_id', user.id)
-      else {
+      // ── Unlike ──────────────────────────────────────────────────────────────
+      if (user) {
+        await supabase.from('likes').delete().eq('publication_id', pub.id).eq('user_id', user.id)
+      } else {
         try {
+          // Retrieve the stored anon key so we can delete the exact DB row
+          const storedKey = localStorage.getItem(`likeKey_${pub.id}`)
+          if (storedKey) {
+            await supabase.from('likes').delete().eq('anon_key', storedKey)
+            localStorage.removeItem(`likeKey_${pub.id}`)
+          }
           const lp = JSON.parse(localStorage.getItem('likedPubs') || '[]')
           localStorage.setItem('likedPubs', JSON.stringify(lp.filter(p => p !== pub.id)))
         } catch {}
       }
-      setLiked(false); setLikeCount(c => Math.max(0, c - 1))
+      const newCount = Math.max(0, likeCount - 1)
+      setLiked(false)
+      setLikeCount(newCount)
+      // Persist the updated count to the database
+      await supabase.from('publications').update({ like_count: newCount }).eq('id', pub.id)
     } else {
+      // ── Like ────────────────────────────────────────────────────────────────
       if (user) {
         const { error } = await supabase.from('likes').insert({ publication_id: pub.id, user_id: user.id })
         if (error) { toast.error('Could not like'); return }
@@ -100,11 +113,17 @@ export default function PublicationPage({ user, profile, pub, related: initialRe
         const { error } = await supabase.from('likes').insert({ publication_id: pub.id, anon_key: anonKey })
         if (error && error.code !== '23505') { toast.error('Could not like'); return }
         try {
+          // Store the anon key so we can delete the exact row on unlike
+          localStorage.setItem(`likeKey_${pub.id}`, anonKey)
           const lp = JSON.parse(localStorage.getItem('likedPubs') || '[]')
           localStorage.setItem('likedPubs', JSON.stringify([...lp, pub.id]))
         } catch {}
       }
-      setLiked(true); setLikeCount(c => c + 1)
+      const newCount = likeCount + 1
+      setLiked(true)
+      setLikeCount(newCount)
+      // Persist the updated count to the database
+      await supabase.from('publications').update({ like_count: newCount }).eq('id', pub.id)
     }
   }
 
@@ -399,10 +418,18 @@ export async function getServerSideProps({ params }) {
       .neq('id', id)
       .limit(3)
 
+    const { data: comments } = await supabase
+      .from('comments')
+      .select('*')
+      .eq('publication_id', id)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: true })
+
     return {
       props: {
         pub,
         related: related || [],
+        initialComments: comments || [],
         error: false,
       },
     }
