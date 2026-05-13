@@ -51,7 +51,7 @@ export default function Home({ user, profile }) {
     try {
       let q = supabase
         .from('publications')
-        .select('id, title, summary, category, cover_image_url, pdf_url, youtube_url, allow_download, author_name, featured, like_count, comment_count, created_at, profiles(full_name), publication_images(id, url)')
+        .select('id, title, summary, category, cover_image_url, pdf_url, youtube_url, allow_download, author_name, featured, like_count, comment_count, created_at, profiles(full_name)')
         .eq('status', 'approved')
         .order('created_at', { ascending: false })
       if (cat && cat !== 'all') q = q.eq('category', cat)

@@ -16,9 +16,10 @@ export default function Document() {
           href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
         />
+        {/* Google Search Console verification */}
+        <meta name="google-site-verification" content="ZTYgxzXdvhEvNIBfSjKPB-ILJDUPq6br-cUkCPy4uGo" />
         {/* PWA / mobile */}
         <meta name="theme-color" content="#1e3a8a" />
-            <meta name="google-site-verification" content="ZTYgxzXdvhEvNIBfSjKPB-ILJDUPq6br-cUkCPy4uGo" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
