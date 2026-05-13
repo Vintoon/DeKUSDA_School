@@ -18,28 +18,28 @@ export default function App({ Component, pageProps }) {
   }, [])
 
   useEffect(() => {
-    // ── Step 1: Read the stored session immediately from localStorage.
-    // onAuthStateChange alone can miss INITIAL_SESSION in Next.js pages router
-    // because the event fires during createClient() — before useEffect runs.
-    // getSession() explicitly reads the token so a refresh never loses the user.
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user)
-        fetchProfile(session.user.id)
+    // onAuthStateChange is the single source of truth for session state.
+    //
+    // Supabase JS v2 fires INITIAL_SESSION synchronously the moment we
+    // subscribe, passing the session it already read from localStorage.
+    // This is the reliable way to restore sessions on page refresh —
+    // DO NOT skip INITIAL_SESSION; doing so causes the "logged out on
+    // refresh" bug because we'd be racing an async getSession() call
+    // against React renders that happen before it resolves.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          fetchProfile(session.user.id)
+        } else {
+          setProfile(null)
+        }
+        // Mark auth as ready after the very first event fires.
+        // setAuthReady(true) is safe to call on every event — React
+        // won't re-render if the value hasn't changed.
+        setAuthReady(true)
       }
-      // Mark auth as ready after the initial read, whether logged in or not
-      setAuthReady(true)
-    })
-
-    // ── Step 2: Listen for auth changes (sign in, sign out, token refresh).
-    // We skip INITIAL_SESSION here because Step 1 already handled it,
-    // preventing a double fetchProfile call.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'INITIAL_SESSION') return // handled by getSession() above
-      setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else { setProfile(null) }
-    })
+    )
 
     return () => subscription.unsubscribe()
   }, [])
