@@ -278,7 +278,14 @@ export default function AdminPage({ user, profile, authReady, refreshProfile }) 
       ? users.filter(u => u.role === 'admin' || u.role === 'superadmin')
       : users
 
-  if (!authReady) return (
+  // Show spinner while:
+  //  a) auth hasn't initialised yet (authReady false), OR
+  //  b) we know a user is logged in but we're still waiting for their
+  //     profile to arrive — without this guard, isAdmin is false for
+  //     the brief window between "user set" and "profile set", which
+  //     causes the "Admin Access Only" screen to flash (or stick if
+  //     the profile fetch is slow).
+  if (!authReady || (user && !profile)) return (
     <>
       <Navbar user={user} profile={profile} />
       <div className="min-h-[60vh] flex items-center justify-center">
