@@ -4,6 +4,13 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q2J8VX1XPC" />
+<script dangerouslySetInnerHTML={{ __html: `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-Q2J8VX1XPC');
+`}} />
         {/* Preconnect first so the font request starts immediately */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
