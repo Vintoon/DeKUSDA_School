@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-# Point crawlers to the dynamic sitemap
-Sitemap: https://dekusdaschool.vercel.app/sitemap.xml
